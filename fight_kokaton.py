@@ -122,7 +122,7 @@ class Explosion:
         if self.index < len(self.images) - 1: #imagesリストの最後のインデックスに達していない場合、indexを更新する
             self.index += 1
         self.image = self.images[self.index]
-        return False  # 爆発が続行中であることを示すためにFalseを返す
+        return False  # 爆発が続行中であることを示すためにFalseを返す1
 
 
 class Bomb:
