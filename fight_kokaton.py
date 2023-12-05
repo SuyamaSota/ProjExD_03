@@ -3,13 +3,13 @@ import sys
 import time
 import os
 import pygame as pg
+import math
 
 
 WIDTH = 1600  # ゲームウィンドウの幅
 HEIGHT = 900  # ゲームウィンドウの高さ
 MAIN_DIR =os.path.split(os.path.abspath(__file__))[0]
 NUM_OF_BOMBS = 5 #爆弾の数
-
 
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
@@ -43,6 +43,7 @@ class Bird:
         引数1 num：こうかとん画像ファイル名の番号
         引数2 xy：こうかとん画像の位置座標タプル
         """
+        self.dire=(+5,0)
         img0 = pg.transform.rotozoom(pg.image.load(f"ex03/fig/{num}.png"), 0, 2.0)
         img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん（右向き）
         self.imgs = {  # 0度から反時計回りに定義
@@ -81,11 +82,14 @@ class Bird:
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
+        
         sum_mv = [0, 0]
         for k, mv in __class__.delta.items():
             if key_lst[k]:
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
+        if sum_mv != [0, 0]:
+            self.dire = tuple(sum_mv)
         self.rct.move_ip(sum_mv)
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
@@ -157,13 +161,23 @@ class Bomb:
 class Beam:
     def __init__(self,bird:Bird):
         self.img = pg.image.load(f"{MAIN_DIR}/fig/beam.png")
-        self.rct = self.img.get_rect()
-        self.rct.center = bird.rct.center
         self.vx , self.vy= +5,0
+
+        vx, vy = bird.dire
+        theta = math.atan2(-vy, vx) # 直交座標から極座標の角度を計算
+        angle = math.degrees(theta)
+        self.image2 = pg.transform.rotozoom(self.img, angle, 1)
+        self.rct = self.image2.get_rect()
+        self.rct.centerx = bird.rct.centerx + bird.rct.width * vx / 5
+        self.rct.centery = bird.rct.centery + bird.rct.height * vy / 5
+        self.vx = vx
+        self.vy = vy
+
+
 
     def update(self,screen:pg.Surface):
         self.rct.move_ip(self.vx,self.vy)
-        screen.blit(self.img,self.rct)
+        screen.blit(self.image2,self.rct)
 
 
 def main():
@@ -184,7 +198,7 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE: #スペースキーが押されたら
                 beam = Beam(bird) #ビームインスタンスの生成
         
-        screen.blit(bg_img, [0, 0])
+        screen.blit(bg_img, [0, 0]) 
         
         for bomb in bombs:
             if bomb is not None:
